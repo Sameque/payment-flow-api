@@ -7,4 +7,4 @@ public sealed record PaymentApprovedEvent(
     Guid PaymentId,
     Guid CustomerId,
     decimal Amount,
-    string ProcessorReference) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc);
+    string ProcessorReference) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc), IPaymentEvent;

@@ -7,4 +7,4 @@ public sealed record PaymentRejectedEvent(
     Guid PaymentId,
     Guid CustomerId,
     decimal Amount,
-    string Reason) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc);
+    string Reason) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc), IPaymentEvent;

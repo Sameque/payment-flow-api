@@ -6,4 +6,4 @@ public sealed record FraudApprovedEvent(
     DateTimeOffset OccurredAtUtc,
     Guid PaymentId,
     Guid CustomerId,
-    decimal Amount) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc);
+    decimal Amount) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc), IPaymentEvent;

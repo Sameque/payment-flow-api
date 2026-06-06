@@ -6,4 +6,4 @@ public sealed record NotificationSentEvent(
     DateTimeOffset OccurredAtUtc,
     Guid PaymentId,
     Guid CustomerId,
-    string NotificationChannel) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc);
+    string NotificationChannel) : IntegrationEvent(EventId, CorrelationId, OccurredAtUtc), IPaymentEvent;
