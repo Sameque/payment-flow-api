@@ -30,14 +30,34 @@ tests/
   Integration
 ```
 
-## Event Flow
+## Payment Lifecycle Flow
 
-1. `POST /payments` creates a `Payment` and stores `PaymentCreatedEvent` in `OutboxMessages`.
-2. Outbox dispatcher publishes `payment.transaction.created`.
-3. Fraud worker consumes it and publishes `payment.fraud.approved` or `payment.fraud.rejected`.
-4. Processor worker consumes approvals and publishes `payment.processor.approved` or `payment.processor.rejected`.
-5. Notification worker consumes final events and publishes `payment.notification.sent`.
-6. Audit worker consumes `payment.#` and stores audit rows.
+The payment process is a distributed saga managed via integration events.
+
+### 1. Initiation
+- **Request**: `POST /payments` $\rightarrow$ `PaymentApplicationService`.
+- **Persistence**: The service creates a `Payment` entity (Status: `Pending`) and a `PaymentCreatedEvent` in the `OutboxMessages` table within a single transaction.
+- **Dispatch**: A background worker publishes `payment.transaction.created` to RabbitMQ.
+
+### 2. Fraud Analysis
+- **Consumption**: `Fraud Worker` consumes the event.
+- **Logic**: `FraudAnalysisService` evaluates the payment.
+  - **Approved**: Payment status moves to `FraudAnalysis` $\rightarrow$ publishes `payment.fraud.approved`.
+  - **Rejected**: Payment status moves to `Rejected` $\rightarrow$ publishes `payment.fraud.rejected`.
+
+### 3. Payment Processing
+- **Consumption**: `Processor Worker` consumes `payment.fraud.approved`.
+- **Logic**: `PaymentProcessorService` simulates an external payment gateway.
+  - **Approved**: Payment status moves to `Approved` $\rightarrow$ publishes `payment.processor.approved`.
+  - **Rejected**: Payment status moves to `Rejected` $\rightarrow$ publishes `payment.processor.rejected`.
+  - **Timeout**: Throws an exception to trigger the retry policy and eventual DLQ.
+
+### 4. Finalization & Observability
+- **Notifications**: `Notification Worker` consumes final outcomes (`approved`, `rejected`, `fraud.rejected`) and dispatches notifications.
+- **Audit**: `Audit Worker` consumes all events (`payment.#`) and uses `AuditService` to persist a full immutable history of the payment lifecycle.
+
+### Status Transitions
+`Pending` $\rightarrow$ `FraudAnalysis` $\rightarrow$ `Approved` / `Rejected` / `Failed`
 
 ## Queue Topology
 
