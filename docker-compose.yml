@@ -1,0 +1,102 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: paymentflow-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:latest
+    container_name: paymentflow-postgres
+    environment:
+      POSTGRES_DB: PaymentFlow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Your_strong_password123
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  payment-api:
+    build:
+      context: .
+      args:
+        TARGET_PROJECT: src/Services/PaymentFlow.Payment.Api/PaymentFlow.Payment.Api.csproj
+    container_name: paymentflow-payment-api
+    command: ["PaymentFlow.Payment.Api.dll"]
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      Persistence__ConnectionString: "Host=postgres;Port=5432;Database=PaymentFlow;Username=postgres;Password=Your_strong_password123"
+      RabbitMq__HostName: "rabbitmq"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  fraud-worker:
+    build:
+      context: .
+      args:
+        TARGET_PROJECT: src/Services/PaymentFlow.Fraud.Worker/PaymentFlow.Fraud.Worker.csproj
+    container_name: paymentflow-fraud-worker
+    command: ["PaymentFlow.Fraud.Worker.dll"]
+    environment:
+      Persistence__ConnectionString: "Host=postgres;Port=5432;Database=PaymentFlow;Username=postgres;Password=Your_strong_password123"
+      RabbitMq__HostName: "rabbitmq"
+    depends_on:
+      payment-api:
+        condition: service_started
+
+  processor-worker:
+    build:
+      context: .
+      args:
+        TARGET_PROJECT: src/Services/PaymentFlow.Processor.Worker/PaymentFlow.Processor.Worker.csproj
+    container_name: paymentflow-processor-worker
+    command: ["PaymentFlow.Processor.Worker.dll"]
+    environment:
+      Persistence__ConnectionString: "Host=postgres;Port=5432;Database=PaymentFlow;Username=postgres;Password=Your_strong_password123"
+      RabbitMq__HostName: "rabbitmq"
+    depends_on:
+      payment-api:
+        condition: service_started
+
+  notification-worker:
+    build:
+      context: .
+      args:
+        TARGET_PROJECT: src/Services/PaymentFlow.Notification.Worker/PaymentFlow.Notification.Worker.csproj
+    container_name: paymentflow-notification-worker
+    command: ["PaymentFlow.Notification.Worker.dll"]
+    environment:
+      Persistence__ConnectionString: "Host=postgres;Port=5432;Database=PaymentFlow;Username=postgres;Password=Your_strong_password123"
+      RabbitMq__HostName: "rabbitmq"
+    depends_on:
+      payment-api:
+        condition: service_started
+
+  audit-worker:
+    build:
+      context: .
+      args:
+        TARGET_PROJECT: src/Services/PaymentFlow.Audit.Worker/PaymentFlow.Audit.Worker.csproj
+    container_name: paymentflow-audit-worker
+    command: ["PaymentFlow.Audit.Worker.dll"]
+    environment:
+      Persistence__ConnectionString: "Host=postgres;Port=5432;Database=PaymentFlow;Username=postgres;Password=Your_strong_password123"
+      RabbitMq__HostName: "rabbitmq"
+    depends_on:
+      payment-api:
+        condition: service_started
