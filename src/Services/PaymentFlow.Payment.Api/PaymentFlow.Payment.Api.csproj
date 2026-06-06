@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="..\..\BuildingBlocks\PaymentFlow.Contracts\PaymentFlow.Contracts.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\PaymentFlow.Observability\PaymentFlow.Observability.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\PaymentFlow.SharedKernel\PaymentFlow.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\PaymentFlow.Outbox\PaymentFlow.Outbox.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\PaymentFlow.Persistence\PaymentFlow.Persistence.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\PaymentFlow.RabbitMq\PaymentFlow.RabbitMq.csproj" />
+  </ItemGroup>
+</Project>
