@@ -17,7 +17,7 @@ public sealed class PaymentDbContext(DbContextOptions<PaymentDbContext> options)
     {
         modelBuilder.Entity<Payment>(builder =>
         {
-            builder.ToTable("Payments");
+            builder.ToTable("payments");
             builder.HasKey(payment => payment.Id);
             builder.Property(payment => payment.CustomerId).IsRequired();
             builder.Property(payment => payment.Amount).HasColumnType("decimal(18,2)").IsRequired();
@@ -29,7 +29,7 @@ public sealed class PaymentDbContext(DbContextOptions<PaymentDbContext> options)
 
         modelBuilder.Entity<OutboxMessage>(builder =>
         {
-            builder.ToTable("OutboxMessages");
+            builder.ToTable("outbox_messages");
             builder.HasKey(message => message.Id);
             builder.Property(message => message.EventType).HasMaxLength(256).IsRequired();
             builder.Property(message => message.RoutingKey).HasMaxLength(128).IsRequired();
@@ -42,7 +42,7 @@ public sealed class PaymentDbContext(DbContextOptions<PaymentDbContext> options)
 
         modelBuilder.Entity<ProcessedMessage>(builder =>
         {
-            builder.ToTable("ProcessedMessages");
+            builder.ToTable("processed_messages");
             builder.HasKey(message => new { message.MessageId, message.ConsumerName });
             builder.Property(message => message.ConsumerName).HasMaxLength(128).IsRequired();
             builder.Property(message => message.ProcessedAtUtc).IsRequired();
@@ -50,7 +50,7 @@ public sealed class PaymentDbContext(DbContextOptions<PaymentDbContext> options)
 
         modelBuilder.Entity<AuditLog>(builder =>
         {
-            builder.ToTable("AuditLogs");
+            builder.ToTable("audit_logs");
             builder.HasKey(log => log.Id);
             builder.Property(log => log.EventType).HasMaxLength(256).IsRequired();
             builder.Property(log => log.RoutingKey).HasMaxLength(128).IsRequired();
