@@ -1,4 +1,5 @@
 using PaymentFlow.Audit.Worker;
+using PaymentFlow.Audit.Worker.Services;
 using PaymentFlow.Contracts;
 using PaymentFlow.Messaging;
 using PaymentFlow.Observability;
@@ -16,6 +17,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddPaymentFlowPersistence(context.Configuration);
         services.AddPaymentFlowRabbitMq(context.Configuration);
         services.AddPaymentFlowOutbox(context.Configuration);
+        services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IIntegrationEventHandler>(provider => AuditIntegrationEventHandler.Create(EventNames.PaymentCreated, provider));
         services.AddScoped<IIntegrationEventHandler>(provider => AuditIntegrationEventHandler.Create(EventNames.FraudApproved, provider));
         services.AddScoped<IIntegrationEventHandler>(provider => AuditIntegrationEventHandler.Create(EventNames.FraudRejected, provider));

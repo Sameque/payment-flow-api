@@ -1,10 +1,9 @@
 using PaymentFlow.Contracts;
 using PaymentFlow.Messaging;
+using PaymentFlow.Notification.Worker;
 using PaymentFlow.Observability;
 using PaymentFlow.Outbox;
 using PaymentFlow.Persistence;
-using PaymentFlow.Processor.Worker;
-using PaymentFlow.Processor.Worker.Services;
 using PaymentFlow.RabbitMq;
 using Serilog;
 
@@ -17,14 +16,15 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddPaymentFlowPersistence(context.Configuration);
         services.AddPaymentFlowRabbitMq(context.Configuration);
         services.AddPaymentFlowOutbox(context.Configuration);
-        services.AddScoped<IPaymentProcessorService, PaymentProcessorService>();
-        services.AddScoped<IIntegrationEventHandler, FraudApprovedHandler>();
+        services.AddScoped<IIntegrationEventHandler, PaymentApprovedNotificationHandler>();
+        services.AddScoped<IIntegrationEventHandler, PaymentRejectedNotificationHandler>();
+        services.AddScoped<IIntegrationEventHandler, FraudRejectedNotificationHandler>();
         services.AddPaymentFlowRabbitMqConsumer(options =>
         {
-            options.ConsumerName = "processor-worker";
-            options.QueueName = RabbitMqTopology.ProcessorQueue;
-            options.DeadLetterQueueName = RabbitMqTopology.ProcessorDeadLetterQueue;
-            options.Bindings = [RoutingKeys.PaymentFraudApproved];
+            options.ConsumerName = "notification-worker";
+            options.QueueName = RabbitMqTopology.NotificationQueue;
+            options.DeadLetterQueueName = RabbitMqTopology.NotificationDeadLetterQueue;
+            options.Bindings = [RoutingKeys.PaymentProcessorApproved, RoutingKeys.PaymentProcessorRejected, RoutingKeys.PaymentFraudRejected];
         });
     })
     .Build();

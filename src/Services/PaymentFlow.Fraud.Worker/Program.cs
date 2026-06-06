@@ -1,5 +1,6 @@
 using PaymentFlow.Contracts;
 using PaymentFlow.Fraud.Worker;
+using PaymentFlow.Fraud.Worker.Services;
 using PaymentFlow.Messaging;
 using PaymentFlow.Observability;
 using PaymentFlow.Outbox;
@@ -16,6 +17,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddPaymentFlowPersistence(context.Configuration);
         services.AddPaymentFlowRabbitMq(context.Configuration);
         services.AddPaymentFlowOutbox(context.Configuration);
+        services.AddScoped<IFraudAnalysisService, FraudAnalysisService>();
         services.AddScoped<IIntegrationEventHandler, PaymentCreatedHandler>();
         services.AddPaymentFlowRabbitMqConsumer(options =>
         {

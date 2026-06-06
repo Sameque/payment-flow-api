@@ -3,11 +3,14 @@ using PaymentFlow.Messaging;
 using PaymentFlow.Outbox;
 using PaymentFlow.Persistence;
 using PaymentFlow.SharedKernel;
+using PaymentFlow.Fraud.Worker.Services;
 
 namespace PaymentFlow.Fraud.Worker;
 
 public sealed class PaymentCreatedHandler(
-    PaymentDbContext dbContext,
+    IPaymentRepository paymentRepository,
+    IUnitOfWork unitOfWork,
+    IFraudAnalysisService fraudAnalysisService,
     IOutboxMessageWriter outboxMessageWriter,
     ILogger<PaymentCreatedHandler> logger) : IIntegrationEventHandler
 {
@@ -19,15 +22,15 @@ public sealed class PaymentCreatedHandler(
     {
         var paymentCreated = (PaymentCreatedEvent)integrationEvent;
 
-        Payment payment = await dbContext.Payments.FindAsync([paymentCreated.PaymentId], cancellationToken)
+        Payment payment = await paymentRepository.GetByIdAsync(paymentCreated.PaymentId, cancellationToken)
             ?? throw new InvalidOperationException($"Payment {paymentCreated.PaymentId} was not found for fraud analysis.");
 
-        payment.MarkFraudAnalysis(DateTimeOffset.UtcNow);
-
-        bool approved = paymentCreated.Amount <= 1000 || Random.Shared.NextDouble() >= 0.30;
+        bool approved = await fraudAnalysisService.AnalyzeAsync(paymentCreated, cancellationToken);
 
         if (approved)
         {
+            payment.MarkFraudAnalysis(DateTimeOffset.UtcNow);
+
             var approvedEvent = new FraudApprovedEvent(
                 Guid.NewGuid(),
                 paymentCreated.CorrelationId,
@@ -65,5 +68,7 @@ public sealed class PaymentCreatedHandler(
                 paymentCreated.EventId,
                 paymentCreated.CorrelationId);
         }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

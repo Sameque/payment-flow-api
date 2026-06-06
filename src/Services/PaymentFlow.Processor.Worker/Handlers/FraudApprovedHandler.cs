@@ -3,11 +3,14 @@ using PaymentFlow.Messaging;
 using PaymentFlow.Outbox;
 using PaymentFlow.Persistence;
 using PaymentFlow.SharedKernel;
+using PaymentFlow.Processor.Worker.Services;
 
 namespace PaymentFlow.Processor.Worker;
 
 public sealed class FraudApprovedHandler(
-    PaymentDbContext dbContext,
+    IPaymentRepository paymentRepository,
+    IUnitOfWork unitOfWork,
+    IPaymentProcessorService processorService,
     IOutboxMessageWriter outboxMessageWriter,
     ILogger<FraudApprovedHandler> logger) : IIntegrationEventHandler
 {
@@ -19,16 +22,12 @@ public sealed class FraudApprovedHandler(
     {
         var fraudApproved = (FraudApprovedEvent)integrationEvent;
 
-        Payment payment = await dbContext.Payments.FindAsync([fraudApproved.PaymentId], cancellationToken)
+        Payment payment = await paymentRepository.GetByIdAsync(fraudApproved.PaymentId, cancellationToken)
             ?? throw new InvalidOperationException($"Payment {fraudApproved.PaymentId} was not found for processing.");
 
-        int outcome = Random.Shared.Next(0, 3);
-        if (outcome == 2)
-        {
-            throw new TimeoutException($"Processor timeout for payment {fraudApproved.PaymentId}.");
-        }
+        var result = await processorService.ProcessAsync(fraudApproved, cancellationToken);
 
-        if (outcome == 0)
+        if (result.IsApproved)
         {
             payment.MarkApproved(DateTimeOffset.UtcNow);
 
@@ -39,7 +38,7 @@ public sealed class FraudApprovedHandler(
                 fraudApproved.PaymentId,
                 fraudApproved.CustomerId,
                 fraudApproved.Amount,
-                $"PF-{Guid.NewGuid():N}");
+                result.Reference!);
 
             outboxMessageWriter.Add(approvedEvent, RoutingKeys.PaymentProcessorApproved);
 
@@ -60,7 +59,7 @@ public sealed class FraudApprovedHandler(
                 fraudApproved.PaymentId,
                 fraudApproved.CustomerId,
                 fraudApproved.Amount,
-                "Processor authorization rejected.");
+                result.Reason ?? "Processor authorization rejected.");
 
             outboxMessageWriter.Add(rejectedEvent, RoutingKeys.PaymentProcessorRejected);
 
@@ -70,5 +69,7 @@ public sealed class FraudApprovedHandler(
                 fraudApproved.EventId,
                 fraudApproved.CorrelationId);
         }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
