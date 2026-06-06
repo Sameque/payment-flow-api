@@ -60,9 +60,7 @@ public sealed class OutboxDispatcher(
                 var integrationEvent = (IntegrationEvent?)JsonSerializer.Deserialize(message.Payload, eventType, SerializerOptions);
 
                 if (integrationEvent is null)
-                {
                     throw new InvalidOperationException($"Outbox message {message.Id} could not be deserialized.");
-                }
 
                 await publisher.PublishAsync(integrationEvent, message.RoutingKey, cancellationToken);
 
