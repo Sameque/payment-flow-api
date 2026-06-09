@@ -26,6 +26,19 @@ services:
       timeout: 5s
       retries: 10
 
+  payment-migration:
+    build:
+      context: .
+      args:
+        TARGET_PROJECT: src/Services/PaymentFlow.Payment.Api/PaymentFlow.Payment.Api.csproj
+    container_name: paymentflow-payment-migration
+    command: ["PaymentFlow.Payment.Api.dll", "--migrate"]
+    environment:
+      Persistence__ConnectionString: "Host=postgres;Port=5432;Database=PaymentFlow;Username=postgres;Password=Your_strong_password123"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   payment-api:
     build:
       context: .
@@ -42,8 +55,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
+      payment-migration:
+        condition: service_completed_successfully
 
   fraud-worker:
     build:
