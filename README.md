@@ -6,6 +6,8 @@ PaymentFlow is a distributed payment processing platform built with .NET 8, Rabb
 
 The platform models a payment lifecycle as integration events. The Payment API persists the aggregate and an outbox message in one transaction. A background outbox dispatcher publishes events to RabbitMQ. Workers consume durable queues with manual ACK/NACK, idempotency checks, retry backoff, and dead-letter queues.
 
+To ensure database consistency across deployments, the system implements a **Migration Sidecar** pattern: a dedicated container applies all pending Entity Framework migrations before the main API and workers start.
+
 ## Folder Structure
 
 ```txt
@@ -76,6 +78,7 @@ Install:
 
 - .NET 8 SDK
 - Docker Desktop
+- EF Core Tools: `dotnet tool install --global dotnet-ef`
 
 Run infrastructure and services:
 
@@ -83,7 +86,9 @@ Run infrastructure and services:
 docker compose up --build
 ```
 
-Apply EF migrations before processing real requests:
+**Note:** Database migrations are automatically applied by the `payment-migration` container before the API starts.
+
+For manual migration updates during development:
 
 ```powershell
 dotnet ef database update --project src/Infrastructure/PaymentFlow.Persistence --startup-project src/Services/PaymentFlow.Payment.Api
