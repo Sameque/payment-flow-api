@@ -18,6 +18,7 @@ public static class PersistenceServiceCollectionExtensions
 
         services.AddDbContext<PaymentDbContext>(builder => builder.UseNpgsql(options.ConnectionString));
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
