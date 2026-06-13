@@ -1,6 +1,8 @@
 using PaymentFlow.Messaging;
 using PaymentFlow.Observability;
 using PaymentFlow.Outbox;
+using PaymentFlow.Payment.Api.Audit;
+using PaymentFlow.Payment.Api.Dashboard;
 using PaymentFlow.Payment.Api.Payments;
 using PaymentFlow.Payment.Api.Mappers;
 using PaymentFlow.Payment.Api.Validators;
@@ -12,7 +14,21 @@ using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:4173")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 builder.Services.AddPaymentFlowObservability(builder.Configuration);
 builder.Host.UseSerilog();
 
@@ -21,6 +37,8 @@ builder.Services.AddPaymentFlowPersistence(builder.Configuration);
 builder.Services.AddPaymentFlowRabbitMq(builder.Configuration);
 builder.Services.AddPaymentFlowOutbox(builder.Configuration);
 builder.Services.AddScoped<IPaymentApplicationService, PaymentApplicationService>();
+builder.Services.AddScoped<IAuditQueryService, AuditQueryService>();
+builder.Services.AddScoped<IDashboardQueryService, DashboardQueryService>();
 builder.Services.AddScoped<IPaymentMapper, PaymentMapper>();
 builder.Services.AddScoped<ICreatePaymentRequestValidator, CreatePaymentRequestValidator>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -49,6 +67,7 @@ if (args.Contains("--migrate"))
 }
 
 app.UseSerilogRequestLogging();
+app.UseCors();
 app.UseExceptionHandler();
 app.MapControllers();
 
