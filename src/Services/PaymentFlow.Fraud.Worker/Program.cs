@@ -16,7 +16,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddPaymentFlowMessaging();
         services.AddPaymentFlowPersistence(context.Configuration);
         services.AddPaymentFlowRabbitMq(context.Configuration);
-        services.AddPaymentFlowOutbox(context.Configuration);
+        services.AddPaymentFlowOutboxWriter(context.Configuration);
         services.AddScoped<IFraudAnalysisService, FraudAnalysisService>();
         services.AddScoped<IIntegrationEventHandler, PaymentCreatedHandler>();
         services.AddPaymentFlowRabbitMqConsumer(options =>

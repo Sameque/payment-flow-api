@@ -35,7 +35,7 @@ builder.Host.UseSerilog();
 builder.Services.AddPaymentFlowMessaging();
 builder.Services.AddPaymentFlowPersistence(builder.Configuration);
 builder.Services.AddPaymentFlowRabbitMq(builder.Configuration);
-builder.Services.AddPaymentFlowOutbox(builder.Configuration);
+builder.Services.AddPaymentFlowOutboxDispatcher(builder.Configuration);
 builder.Services.AddScoped<IPaymentApplicationService, PaymentApplicationService>();
 builder.Services.AddScoped<IAuditQueryService, AuditQueryService>();
 builder.Services.AddScoped<IDashboardQueryService, DashboardQueryService>();
