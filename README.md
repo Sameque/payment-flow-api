@@ -1,6 +1,6 @@
 # PaymentFlow
 
-PaymentFlow is a distributed payment processing platform built with .NET 8, RabbitMQ, SQL Server, EF Core, hosted workers, the Outbox Pattern, idempotent consumers, structured logging, and OpenTelemetry.
+PaymentFlow is a distributed payment processing platform built with .NET 8, RabbitMQ, PostgreSQL, EF Core, hosted workers, the Outbox Pattern, idempotent consumers, structured logging, and OpenTelemetry.
 
 ## Architecture Overview
 

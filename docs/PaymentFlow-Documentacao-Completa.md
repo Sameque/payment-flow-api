@@ -59,7 +59,7 @@ Cliente
 Payment API
    |
    v
-SQL Server
+PostgreSQL
    |
    v
 Outbox
@@ -216,7 +216,7 @@ Sem esse mecanismo poderia existir pagamento salvo sem evento publicado.
 
 # Etapa 3 – Dispatcher
 
-Um processo em background monitora a tabela Outbox.
+Um processo em background, executado exclusivamente dentro da Payment API, monitora a tabela Outbox.
 
 Fluxo:
 
@@ -565,7 +565,7 @@ Cliente
 ↓
 Payment API
 ↓
-SQL Server
+PostgreSQL
 ↓
 Outbox
 ↓
