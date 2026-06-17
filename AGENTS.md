@@ -51,7 +51,7 @@ All code should resemble a real-world backend platform.
 - ASP.NET Core Web API
 - Worker Services
 - Entity Framework Core
-- SQL Server
+- PostegreSQL
 - RabbitMQ
 - Serilog
 - OpenTelemetry

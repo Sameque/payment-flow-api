@@ -23,7 +23,7 @@ Este documento deve ser anexado à documentação principal e tem como objetivo 
           ▼
 
 ┌────────────────────┐
-│     SQL SERVER     │
+│    PostegreSQL     │
 │ Payments           │
 │ OutboxMessages     │
 └─────────┬──────────┘
